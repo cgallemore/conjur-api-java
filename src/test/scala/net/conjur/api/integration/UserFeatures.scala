@@ -1,27 +1,21 @@
 package net.conjur.api.integration
-import scala.util.Random
 import org.scalatest._
+
 import net.conjur.api.authn._
 import net.conjur.api._
-import System.out.println
+import net.conjur.api.support._
+import RandomString._
 
-case class UserWithPassword(user:User, password:String){
-  def this(user:User) = this(user, user.getApiKey)
-  def login = user.getLogin
-}
-object UserWithPassword{
-  def apply(user:User):UserWithPassword = new UserWithPassword(user)
-  implicit def userToUserWithPassword(user:User) = UserWithPassword(user)
-  implicit def userWithPasswordToCredentials(uwp:UserWithPassword) = new Credentials(uwp.user.getLogin, uwp.password)
-}
-
-/**
- *
- */
 class UserFeatures extends FeatureSpec
     with ShouldMatchers
-    with ConjurFixtures
+    with AllTestSupport
     with GivenWhenThen {
+
+  lazy val admin = new Conjur(env.credentials, env.endpoints)
+  lazy val nsPrefix = randomString(10)
+  def randomPassword = randomString(16)
+  def randomUsername = randomString("test-user-", 10)
+  def ns(s:String) = nsPrefix + s
 
   info("As a Conjur based service")
   info("I want to create Conjur users")
@@ -66,7 +60,7 @@ class UserFeatures extends FeatureSpec
   feature("User existence testing"){
     scenario("Created users exist"){
       Given("a user I created")
-      val alice = admin.users.create(ns("alice"))
+      val alice = admin.users.create(randomUsername)
 
       Then("the user exists")
       admin.users.exists(alice.getLogin) should be(true)
@@ -74,7 +68,7 @@ class UserFeatures extends FeatureSpec
 
     scenario("The admin user exists"){
       Then("the user admin exists")
-      admin.users.exists(admin.login) should be(true)
+      admin.users.exists(env.credentials.getUsername) should be(true)
     }
 
     scenario("A random username should not exist"){
@@ -89,7 +83,7 @@ class UserFeatures extends FeatureSpec
     scenario("Exchange a password for an API key"){
       Given("A user named alice with a random password")
       val pw = randomPassword
-      val alice = admin.users.create(ns('alice), pw)
+      val alice = admin.users.create(randomUsername, pw)
 
       Then("I can get her api key using her password")
       new AuthnClient(alice.getLogin, pw).login should equal(alice.getApiKey)
@@ -119,16 +113,17 @@ class UserFeatures extends FeatureSpec
     }
     scenario("Change a user's password using her api key"){
       Given("a user named alice")
-      val alice = loginAs('alice)
+      val username = randomUsername
+      val user = admin.users.create(username)
 
       And("a random password")
       val password = randomPassword
 
       When("I update her password to the new password")
-      new AuthnClient(alice.getUsername, alice.getPassword).updatePassword(password)
+      new AuthnClient(user.getLogin, user.getApiKey).updatePassword(password)
 
       Then("I can authenticate with the new password")
-      new AuthnClient(alice.getUsername, password).authenticate
+      new AuthnClient(user.getLogin, password).authenticate
     }
   }
 

@@ -2,6 +2,7 @@ package net.conjur.api;
 
 import net.conjur.api.authn.AuthnProvider;
 import net.conjur.util.Args;
+import net.conjur.util.UrlUtil;
 
 import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.NotFoundException;
@@ -40,7 +41,7 @@ public class Users extends Resource {
     public boolean exists(final String username){
         try{
             // we need to read it as a string to make jersey throw an exception, I believe.
-            roles.resolveTemplate("id", username).request().get(String.class);
+            roles.path(UrlUtil.urlEncode(username)).request().get(String.class);
             return true;
         }catch(ForbiddenException e){
             // this indicates that the user does, in fact, exist, we just can't
@@ -56,8 +57,7 @@ public class Users extends Resource {
         users = target(getEndpoints().getDirectoryUri()).path("users");
         roles = target(getEndpoints().getAuthzUri())
                 .path("roles")
-                .path("user")
-                .path("{id}");
+                .path("user");
     }
 
     private WebTarget users(){

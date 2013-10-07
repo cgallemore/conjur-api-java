@@ -1,6 +1,7 @@
 package net.conjur.api;
 
 import com.sun.org.apache.xalan.internal.xsltc.compiler.util.StringType;
+import net.conjur.util.UrlUtil;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.annotate.JsonCreator;
 import org.codehaus.jackson.annotate.JsonProperty;
@@ -14,6 +15,8 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Form;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+
+import static net.conjur.util.UrlUtil.urlEncode;
 
 /**
  *
@@ -135,7 +138,7 @@ public class Variable extends Resource {
     }
 
     private void buildTargets(){
-        target = target(getEndpoints().getDirectoryUri()).path("variables").path(id);
+        target = target(getEndpoints().getDirectoryUri()).path("variables").path(urlEncode(id));
     }
 
     @Override

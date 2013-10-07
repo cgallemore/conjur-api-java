@@ -1,13 +1,77 @@
 package net.conjur.api.specs
 
-import org.scalatest.{ShouldMatchers, GivenWhenThen, FunSpec}
+import org.scalatest.{FlatSpec, ShouldMatchers, GivenWhenThen, FunSpec}
 import net.conjur.api.authn.Token
 import org.joda.time.{DateTime, DateTimeZone}
-import net.conjur.api.specs.support.Tardis
+import net.conjur.api.support.{AllTestSupport, Tardis}
+import scala.util.parsing.json.JSON
 
-/**
- *
- */
+class TokenSpec
+  extends FlatSpec
+  with GivenWhenThen
+  with ShouldMatchers
+  with AllTestSupport {
+  def parseTokenDate(s:String) = Token.DATE_TIME_FORMATTER.parseDateTime(s)
+
+  lazy val dateString = "2013-10-01 18:48:32 UTC"
+  lazy val parsedDateString = parseTokenDate(dateString)
+
+  lazy val tokenJson = fixtureFile("token.json")
+  lazy val tokenJsonExpiration = Token.DATE_TIME_FORMATTER.parseDateTime("2013-10-04 23:23:50 UTC")
+  lazy val tokenFromJson = Token.fromJson(tokenJson)
+
+  lazy val tokenBase64 = fixtureFile("token.base64")
+  lazy val tokenHeader = "Token token=\"" + tokenBase64 + "\""
+
+  "Token.DATE_TIME_FORMATTER" should ("parse a date string " + dateString + " correctly") in {
+    parsedDateString should have (
+      // we have to use getXYZ because joda dates have properties like yearOfCentury
+      'getYearOfCentury (13),
+      'getMonthOfYear (10),
+      'getDayOfMonth (1),
+      'getHourOfDay (18),
+      'getMinuteOfHour (48),
+      'getSecondOfMinute (32),
+      'getZone (DateTimeZone.UTC)
+    )
+  }
+
+  "a Token created from json" should "have the right fields" in {
+    tokenFromJson should have (
+      'data ("jjm"),
+      'key  ("the key"),
+      'signature ("the signature"),
+      'timestamp (tokenJsonExpiration),
+      'expiration (tokenJsonExpiration.plusSeconds(Token.DEFAULT_LIFESPAN_SECONDS))
+    )
+  }
+
+  it should "generate base64 correctly" in {
+    tokenFromJson.toBase64 should equal(tokenBase64)
+  }
+
+  it should "should generate a header correctly" in {
+    tokenFromJson.toHeader should equal(tokenHeader)
+  }
+
+  "A Token expiring in 5 minutes" should "not be expired in" in {
+    pending
+  }
+
+  it should "expire within 15 minutes" in {
+    pending
+  }
+
+  it should "not expire within 1 minute" in {
+    pending
+  }
+
+  it should "be expired after I time travel 15 minutes into the future" in {
+    pending
+  }
+
+}
+/*
 class TokenTest extends FunSpec with GivenWhenThen with ShouldMatchers with Tardis {
   describe("Timestamp handling"){
     it("Parses a date correctly"){
@@ -49,4 +113,4 @@ class TokenTest extends FunSpec with GivenWhenThen with ShouldMatchers with Tard
 
     }
   }
-}
+}*/

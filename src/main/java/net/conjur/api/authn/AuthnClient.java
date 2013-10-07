@@ -3,6 +3,7 @@ package net.conjur.api.authn;
 import net.conjur.api.Credentials;
 import net.conjur.api.Endpoints;
 import net.conjur.util.Args;
+import net.conjur.util.UrlUtil;
 import net.conjur.util.logging.LogFilter;
 import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
 import org.glassfish.jersey.client.ClientConfig;
@@ -18,6 +19,7 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.UriBuilder;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.util.logging.Logger;
 
 /**
@@ -93,7 +95,7 @@ public class AuthnClient implements AuthnProvider {
         client = builder.build();
         root = client.target(endpoints.getAuthnUri()).path("users");
         login = root.path("login");
-        authenticate = root.path(username).path("authenticate");
+        authenticate = root.path(UrlUtil.urlEncode(username)).path("authenticate");
         passwords = root.path("password");
     }
 
